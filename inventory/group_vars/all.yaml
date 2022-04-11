@@ -8,4 +8,8 @@ prereq_pkgs:
   - butane
   - coreos-installer
   - rpi-imager
+    
+worker_hostname: 'pi-worker-0'
+master_hostname: 'pi-master-0'
 ...
+
