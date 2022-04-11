@@ -1,0 +1,11 @@
+---
+state: 'present'
+
+ssh_user: "{{ ansible_user }}"
+ssh_pub_key: "{{ lookup('file', /home/ssh_user/.ssh/id_rsa.pub) }}"
+
+prereq_pkgs:
+  - butane
+  - coreos-installer
+  - rpi-imager
+...

@@ -1,0 +1,6 @@
+---
+- name: "{{ 'Generate' if state == 'present' else 'Clean up' }} ignition configs"
+  hosts: local
+  connection: local
+  tasks:
+    - 

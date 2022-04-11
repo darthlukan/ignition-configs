@@ -1,0 +1,3 @@
+---
+- import_playbook: playbooks/fedora-prereqs.yaml
+- import_playbook: playbooks/generate-ign.yaml
