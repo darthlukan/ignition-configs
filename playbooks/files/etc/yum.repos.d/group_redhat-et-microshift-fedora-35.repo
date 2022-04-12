@@ -1,0 +1,10 @@
+[copr:copr.fedorainfracloud.org:group_redhat-et:microshift]
+name=Copr repo for microshift owned by @redhat-et
+baseurl=https://download.copr.fedorainfracloud.org/results/@redhat-et/microshift/fedora-$releasever-$basearch/
+type=rpm-md
+skip_if_unavailable=True
+gpgcheck=1
+gpgkey=https://download.copr.fedorainfracloud.org/results/@redhat-et/microshift/pubkey.gpg
+repo_gpgcheck=0
+enabled=1
+enabled_metadata=1
