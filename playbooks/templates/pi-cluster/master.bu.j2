@@ -6,6 +6,9 @@ passwd:
       ssh_authorized_keys:
         - {{ ssh_pub_key }}
 storage:
+  trees:
+    - local: etc 
+      path: /etc
   files:
     - path: /etc/hostname
       mode: 0644
