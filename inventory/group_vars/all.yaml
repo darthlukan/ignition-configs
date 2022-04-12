@@ -1,15 +1,17 @@
 ---
 state: 'present'
 
-ssh_user: "{{ ansible_user }}"
-ssh_pub_key: "{{ lookup('file', /home/ssh_user/.ssh/id_rsa.pub) }}"
+ssh_user: "{{ lookup('env', 'USER') }}"
+ssh_pub_key: "{{ lookup('file', '/home/' + ssh_user + '/.ssh/id_rsa.pub') }}"
 
 prereq_pkgs:
   - butane
   - coreos-installer
+  - make
   - rpi-imager
     
 worker_hostname: 'pi-worker-0'
+worker_ip: false 
 master_hostname: 'pi-master-0'
+master_ip: false 
 ...
-
