@@ -1,6 +1,39 @@
 ---
-- name: "{{ 'Generate' if state == 'present' else 'Clean up' }} ignition configs"
+- name: Manage ignition configs
   hosts: local
   connection: local
   tasks:
-    - 
+    - name: Build directory is {{ state }}
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/../build/etc/{{ item }}"
+        state: "{{ 'directory' if state == 'present' else state }}"
+      loop:
+        - microshift
+        - yum.repos.d
+
+    - name: Copy microshift config template to build dir
+      ansible.builtin.template:
+        src: templates/pi-cluster/microshift-config.yaml.j2
+        dest: "{{ playbook_dir }}/../build/etc/microshift/config.yaml"
+      when: state == 'present'
+
+    - name: Copy microshift repos to build dir
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/files/"
+        dest: "{{ playbook_dir }}/../build/"
+      when: state == 'present'
+
+    - name: Copy ignition templates to build dir
+      ansible.builtin.template:
+        src: templates/pi-cluster/{{ item }}.bu.j2
+        dest: "{{ playbook_dir }}/../build/{{ item }}.bu"
+      loop:
+        - master
+        - worker
+      when: state == 'present'
+
+    - name: Make distribution
+      community.general.make:
+        chdir: "{{ playbook_dir }}/../"
+        make: /usr/bin/make
+        target: distribution

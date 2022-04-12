@@ -1,6 +1,8 @@
-- name: "{{ 'Install' if state == 'present' else 'Remove' }} prerequisites for Fedora/RHEL systems"
+---
+- name: Manage prerequisites for Fedora/RHEL systems
   hosts: local
   connection: local
+  become: true
   tasks:
     - name: Prereq packages are {{ state }}
       ansible.builtin.dnf:
