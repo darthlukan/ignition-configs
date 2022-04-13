@@ -1,6 +1,14 @@
 ---
 state: 'present'
 
+fedora_release: 35
+sdcard_device: /dev/mmcblk0
+tmp_pi_boot_path: /tmp/rpi4boot/boot/efi
+pi4_boot_pkgs:
+  - uboot-images-armv8
+  - bcm283x-firmware
+  - bcm283x-overlays
+
 ssh_user: "{{ lookup('env', 'USER') }}"
 ssh_pub_key: "{{ lookup('file', '/home/' + ssh_user + '/.ssh/id_rsa.pub') }}"
 
