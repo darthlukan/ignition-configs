@@ -16,7 +16,7 @@
       ansible.builtin.dnf:
         name: "{{ pi4_boot_pkgs }}"
         releasever: "{{ fedora_release }}"
-        state: "{{ present }}"
+        state: "{{ state }}"
         update_cache: "{{ 'yes' if state == 'present' else 'no' }}"
         download_dir: "{{ tmp_rpm_dest_path }}"
         download_only: yes
@@ -28,15 +28,59 @@
         patterns:
           - "*rpm"
       register: rpms
+      when: state == 'present'
 
     - name: Process RPMs to CPIO
       ansible.builtin.shell:
         cmd: rpm2cpio {{ item }} | cpio -idv -D {{ tmp_rpm_dest_path }}
       loop: rpms.files
+      when: state == 'present'
 
     - name: Copy rpi4 u-boot.bin to temp boot dir
       ansible.builtin.copy:
         src: "{{ tmp_rpm_dest_path }}/usr/share/uboot/rpi_4/u-boot.bin"
         dest: "{{ tmp_pi_boot_path }}/rpi4-u-boot.bin"
+      when: state == 'present'
+
+    - name: Bootstrap sdcard with coreos-installer
+      ansible.builtin.shell:
+        cmd: coreos-installer install --architecture=aarch64 -i {{ ign_to_apply }} {{ sdcard_device }}
+      when: state == 'present'
+
+    - name: Query for efi partition
+      ansible.builtin.shell:
+        cmd: lsblk {{ sdcard_device }} -J -oLABEL,PATH | jq -r '.blockdevices[] | select(.label == "EFI-SYSTEM")'.path
+      register: lsblk
+      when: state == 'present'
+
+    - name: Set efi partition fact
+      ansible.builtin.set_fact:
+        efi_part: "{{ lsblk.stdout }}"
+      when: state == 'present'
+
+    - name: EFI partition temp dir is present
+      ansible.builtin.file:
+        path: "{{ tmp_efipart_path }}" 
+        owner: "{{ become_user }}"
+        group: "{{ become_user }}"
+        state: "{{ 'directory' if state == 'present' else state }}"
+
+    - name: Mount efi part
+      ansible.builtin.shell:
+        cmd: mount {{ efi_part }} {{ tmp_efipart_path }}
+      when: state == 'present'
+
+    - name: sync files to tmp efi partition path
+      ansible.posix.synchronize:
+        src: "{{ rmp_pi_boot_path }}"
+        dest: "{{ tmp_efipart_path }}"
+        archive: yes
+        rsync_opts:
+          - "--ignore-existing"
+      when: state == 'present'
+
+    - name: Unmount efi part
+      ansible.builtin.shell:
+        cmd: umount {{ efi_part }}
       when: state == 'present'
 ...
