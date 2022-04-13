@@ -8,8 +8,8 @@
     - name: Pi tmp boot path directory exists
       ansible.builtin.file:
         path: "{{ tmp_pi_boot_path }}"
-        owner: "{{ become_user }}"
-        group: "{{ become_user }}"
+        owner: root
+        group: root
         state: "{{ 'directory' if state == 'present' else state }}"
 
     - name: Pi4 boot packages are present
@@ -20,7 +20,7 @@
         update_cache: "{{ 'yes' if state == 'present' else 'no' }}"
         download_dir: "{{ tmp_rpm_dest_path }}"
         download_only: yes
-        conf_file: "{{ playbook_dir }}/files/etc/dnf/dnf.conf"
+        conf_file: "{{ playbook_dir }}/files/dnf/dnf.conf"
 
     - name: Register list of rpms
       ansible.builtin.find:
@@ -32,8 +32,8 @@
 
     - name: Process RPMs to CPIO
       ansible.builtin.shell:
-        cmd: rpm2cpio {{ item }} | cpio -idv -D {{ tmp_rpm_dest_path }}
-      loop: rpms.files
+        cmd: rpm2cpio {{ item.path }} | cpio -idv -D {{ tmp_rpm_dest_path }}
+      loop: "{{ rpms.files }}"
       when: state == 'present'
 
     - name: Copy rpi4 u-boot.bin to temp boot dir
@@ -44,7 +44,7 @@
 
     - name: Bootstrap sdcard with coreos-installer
       ansible.builtin.shell:
-        cmd: coreos-installer install --architecture=aarch64 -i {{ ign_to_apply }} {{ sdcard_device }}
+        cmd: coreos-installer install --architecture=aarch64 -i {{playbook_dir}}/../dist/{{ ign_to_apply }} {{ sdcard_device }}
       when: state == 'present'
 
     - name: Query for efi partition
@@ -61,8 +61,8 @@
     - name: EFI partition temp dir is present
       ansible.builtin.file:
         path: "{{ tmp_efipart_path }}" 
-        owner: "{{ become_user }}"
-        group: "{{ become_user }}"
+        owner: root
+        group: root
         state: "{{ 'directory' if state == 'present' else state }}"
 
     - name: Mount efi part
@@ -72,7 +72,7 @@
 
     - name: sync files to tmp efi partition path
       ansible.posix.synchronize:
-        src: "{{ rmp_pi_boot_path }}"
+        src: "{{ tmp_pi_boot_path }}"
         dest: "{{ tmp_efipart_path }}"
         archive: yes
         rsync_opts:
