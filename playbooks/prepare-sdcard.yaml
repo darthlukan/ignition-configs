@@ -1,0 +1,24 @@
+---
+- name: Prepare SDCARD
+  hosts: local
+  become: true
+  become_user: root
+  become_method: su
+  tasks:
+    - name: Pi tmp boot path directory exists
+      ansible.builtin.file:
+        path: "{{ tmp_pi_boot_path }}"
+        owner: "{{ become_user }}"
+        group: "{{ become_user }}"
+        state: "{{ 'directory' if state == 'present' else state }}"
+
+    - name: Pi4 boot packages are present
+      ansible.builtin.dnf:
+        name: "{{ pi4_boot_pkgs }}"
+        releasever: "{{ fedora_release }}"
+        state: "{{ present }}"
+        update_cache: "{{ 'yes' if state == 'present' else 'no' }}"
+        download_dir: "{{ tmp_rpm_dest_path }}"
+        download_only: yes
+        conf_file: "{{ playbook_dir }}/files/etc/dnf/dnf.conf"
+...
