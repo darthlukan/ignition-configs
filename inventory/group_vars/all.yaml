@@ -3,7 +3,8 @@ state: 'present'
 
 fedora_release: 35
 sdcard_device: /dev/mmcblk0
-tmp_pi_boot_path: /tmp/rpi4boot/boot/efi
+tmp_rpm_dest_path: /tmp/rpi4boot
+tmp_pi_boot_path: "{{ tmp_rpm_dest_path }}/boot/efi"
 pi4_boot_pkgs:
   - uboot-images-armv8
   - bcm283x-firmware
