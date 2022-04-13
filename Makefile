@@ -3,7 +3,7 @@
 
 .PHONY: ansible
 ansible:
-	ansible-playbook -i inventory/hosts.ini main.yaml -K
+	ansible-playbook -i inventory/hosts.ini -c local main.yaml -K
 
 .PHONY: clean
 clean:
