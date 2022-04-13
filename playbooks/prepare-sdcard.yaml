@@ -44,7 +44,7 @@
 
     - name: Bootstrap sdcard with coreos-installer
       ansible.builtin.shell:
-        cmd: coreos-installer install --architecture=aarch64 -i {{playbook_dir}}/../dist/{{ ign_to_apply }} {{ sdcard_device }}
+        cmd: coreos-installer install --architecture=aarch64 -i {{ playbook_dir }}/../dist/{{ ign_to_apply }} {{ sdcard_device }}
       when: state == 'present'
 
     - name: Query for efi partition
