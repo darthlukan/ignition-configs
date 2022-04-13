@@ -21,4 +21,22 @@
         download_dir: "{{ tmp_rpm_dest_path }}"
         download_only: yes
         conf_file: "{{ playbook_dir }}/files/etc/dnf/dnf.conf"
+
+    - name: Register list of rpms
+      ansible.builtin.find:
+        paths: "{{ tmp_rpm_dest_path }}"
+        patterns:
+          - "*rpm"
+      register: rpms
+
+    - name: Process RPMs to CPIO
+      ansible.builtin.shell:
+        cmd: rpm2cpio {{ item }} | cpio -idv -D {{ tmp_rpm_dest_path }}
+      loop: rpms.files
+
+    - name: Copy rpi4 u-boot.bin to temp boot dir
+      ansible.builtin.copy:
+        src: "{{ tmp_rpm_dest_path }}/usr/share/uboot/rpi_4/u-boot.bin"
+        dest: "{{ tmp_pi_boot_path }}/rpi4-u-boot.bin"
+      when: state == 'present'
 ...
