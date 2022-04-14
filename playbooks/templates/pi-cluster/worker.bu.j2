@@ -11,6 +11,7 @@ storage:
       path: /etc/yum.repos.d
   files:
     - path: /etc/hostname
+      overwrite: true
       mode: 0644
       contents:
         inline: {{ worker_hostname }}

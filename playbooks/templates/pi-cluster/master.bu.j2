@@ -5,6 +5,9 @@ passwd:
     - name: core
       ssh_authorized_keys:
         - {{ ssh_pub_key }}
+      groups:
+        - wheel
+      shell: /bin/zsh
 storage:
   trees:
     - local: etc 
@@ -12,5 +15,6 @@ storage:
   files:
     - path: /etc/hostname
       mode: 0644
+      overwrite: true
       contents:
         inline: {{ master_hostname }}
