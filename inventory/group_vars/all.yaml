@@ -1,6 +1,16 @@
 ---
 state: 'present'
 
+fedora_release: 35
+sdcard_device: /dev/mmcblk0
+tmp_rpm_dest_path: /tmp/rpi4boot
+tmp_pi_boot_path: "{{ tmp_rpm_dest_path }}/boot/efi"
+tmp_efipart_path: /tmp/fcosefipart
+pi4_boot_pkgs:
+  - uboot-images-armv8
+  - bcm283x-firmware
+  - bcm283x-overlays
+
 ssh_user: "{{ lookup('env', 'USER') }}"
 ssh_pub_key: "{{ lookup('file', '/home/' + ssh_user + '/.ssh/id_rsa.pub') }}"
 
@@ -14,4 +24,6 @@ worker_hostname: 'pi-worker-0'
 worker_ip: false 
 master_hostname: 'pi-master-0'
 master_ip: false 
+
+ign_to_apply: 'master.ign'
 ...
