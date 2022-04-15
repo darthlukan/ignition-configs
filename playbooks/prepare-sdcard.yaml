@@ -68,16 +68,28 @@
     - name: Mount efi part
       ansible.builtin.shell:
         cmd: mount {{ efi_part }} {{ tmp_efipart_path }}
+      register: mount
       when: state == 'present'
+      failed_when: mount.rc != 0
+
+    - name: Wait 20 seconds for mount to come available
+      ansible.builtin.wait_for:
+        timeout: 20 
 
     - name: sync files to tmp efi partition path
       ansible.posix.synchronize:
-        src: "{{ tmp_pi_boot_path }}"
-        dest: "{{ tmp_efipart_path }}"
+        src: "{{ tmp_pi_boot_path }}/"
+        dest: "{{ tmp_efipart_path }}/"
         archive: yes
         rsync_opts:
           - "--ignore-existing"
       when: state == 'present'
+
+    - name: Wait 20 seconds for disk to catch up
+      ansible.builtin.wait_for:
+        path: "{{ tmp_efipart_path }}/start.elf"
+        delay: 20
+        timeout: 1
 
     - name: Unmount efi part
       ansible.builtin.shell:
