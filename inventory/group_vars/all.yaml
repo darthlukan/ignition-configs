@@ -1,5 +1,6 @@
 ---
 state: 'present'
+cleanup: true
 
 fedora_release: 35
 sdcard_device: /dev/mmcblk0
