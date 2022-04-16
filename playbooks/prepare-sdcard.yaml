@@ -4,6 +4,17 @@
   become: true
   become_user: root
   become_method: su
+  handlers:
+    - name: Cleanup temp directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: 'absent'
+      loop:
+        - "{{ tmp_pi_boot_path }}"
+        - "{{ tmp_rpm_dest_path }}"
+        - "{{ tmp_efipart_path }}"
+      when: cleanup is true
+
   tasks:
     - name: Pi tmp boot path directory exists
       ansible.builtin.file:
@@ -88,11 +99,13 @@
     - name: Wait 20 seconds for disk to catch up
       ansible.builtin.wait_for:
         path: "{{ tmp_efipart_path }}/start.elf"
-        delay: 20
-        timeout: 1
+        timeout: 20
+      when: state == 'present'
 
     - name: Unmount efi part
       ansible.builtin.shell:
         cmd: umount {{ efi_part }}
       when: state == 'present'
+      notify:
+        - Cleanup temp directories
 ...
