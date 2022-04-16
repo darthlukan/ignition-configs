@@ -16,12 +16,37 @@
       when: cleanup is true
 
   tasks:
+    - name: Determine pkg cache availability
+      ansible.builtin.find:
+        paths: "{{ playbook_dir }}/../cache/pi4/pkgs"
+        patterns:
+          - "*rpm"
+      register: cached_pkgs
+      when: use_cache is true
+
     - name: Pi tmp boot path directory exists
       ansible.builtin.file:
         path: "{{ tmp_pi_boot_path }}"
         owner: root
         group: root
         state: "{{ 'directory' if state == 'present' else state }}"
+      when: use_cache is false
+
+    - name: Pi cached boot path directory exists
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/../cache/pi4/boot/efi"
+        owner: root
+        group: root
+        state: 'directory'
+      when: use_cache is true and state == 'present'
+
+    - name: Pi cached fcos-images directory exists
+      ansible.builtin.file:
+        path: "{{ playbook_dir }}/../cache/pi4/fcos-images"
+        owner: root
+        group: root
+        state: 'directory'
+      when: state == 'present' and use_cache is true
 
     - name: Pi4 boot packages are present
       ansible.builtin.dnf:
@@ -32,6 +57,13 @@
         download_dir: "{{ tmp_rpm_dest_path }}"
         download_only: yes
         conf_file: "{{ playbook_dir }}/files/dnf/dnf.conf"
+      when: (use_cache is false) or ((use_cache is true) and (cached_pkgs.files | length == 0))
+
+    - name: Cache packages
+      ansible.builtin.copy:
+        src: "{{ tmp_rpm_dest_path }}/"
+        dest: "{{ playbook_dir }}/../cache/pi4/pkgs"
+      when: use_cache is true and state == 'present' and (cached_pkgs.files | length ==0)
 
     - name: Register list of rpms
       ansible.builtin.find:
@@ -39,24 +71,63 @@
         patterns:
           - "*rpm"
       register: rpms
-      when: state == 'present'
+      when: state == 'present' and use_cache is false
+
+    - name: Register list of cached rpms
+      ansible.builtin.find:
+        paths: "{{ playbook_dir }}/../cache/pi4/pkgs"
+        patterns:
+          - "*rpm"
+      register: cached_rpms
+      when: state == 'present' and use_cache is true
 
     - name: Process RPMs to CPIO
       ansible.builtin.shell:
         cmd: rpm2cpio {{ item.path }} | cpio -idv -D {{ tmp_rpm_dest_path }}
       loop: "{{ rpms.files }}"
-      when: state == 'present'
+      when: state == 'present' and use_cache is false 
+
+    - name: Process cached RPMs to CPIO
+      ansible.builtin.shell:
+        cmd: rpm2cpio {{ item.path }} | cpio -idv -D {{ playbook_dir }}/../cache/pi4/
+      loop: "{{ cached_rpms.files }}"
+      when: state == 'present' and use_cache is true 
 
     - name: Copy rpi4 u-boot.bin to temp boot dir
       ansible.builtin.copy:
         src: "{{ tmp_rpm_dest_path }}/usr/share/uboot/rpi_4/u-boot.bin"
         dest: "{{ tmp_pi_boot_path }}/rpi4-u-boot.bin"
-      when: state == 'present'
+      when: state == 'present' and use_cache is false
+
+    - name: Copy rpi4 u-boot.bin to cache boot dir
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../cache/pi4/usr/share/uboot/rpi_4/u-boot.bin"
+        dest: "{{ playbook_dir }}/../cache/pi4/boot/efi/rpi4-u-boot.bin"
+      when: state == 'present' and use_cache is true
+
+    - name: Find Fedora CoreOS image in cache
+      ansible.builtin.find:
+        paths: "{{ playbook_dir }}/../cache/pi4/fcos-images/"
+        size: 500m
+        patterns:
+          - "*.raw.xz"
+      register: fcos_image
+      when: use_cache is true
+
+    - name: Download Fedora CoreOS image to cache dir
+      ansible.builtin.shell:
+        cmd: coreos-installer download -a aarch64 -C {{ playbook_dir }}/../cache/pi4/fcos-images/
+      when: state == 'present' and use_cache is true and (fcos_image.files | length == 0)
+
+    - name: Bootstrap sdcard with coreos-installer and cached image
+      ansible.builtin.shell:
+        cmd: coreos-installer install -a aarch64 -f {{ fcos_image.files[0].path }} -i {{ playbook_dir }}/../dist/{{ ign_to_apply }} {{ sdcard_device }}
+      when: state == 'present' and use_cache is true
 
     - name: Bootstrap sdcard with coreos-installer
       ansible.builtin.shell:
-        cmd: coreos-installer install --architecture=aarch64 -i {{ playbook_dir }}/../dist/{{ ign_to_apply }} {{ sdcard_device }}
-      when: state == 'present'
+        cmd: coreos-installer install -a aarch64 -i {{ playbook_dir }}/../dist/{{ ign_to_apply }} {{ sdcard_device }}
+      when: state == 'present' and use_cache is false
 
     - name: Query for efi partition
       ansible.builtin.shell:
@@ -94,7 +165,16 @@
         archive: yes
         rsync_opts:
           - "--ignore-existing"
-      when: state == 'present'
+      when: state == 'present' and use_cache is false
+
+    - name: sync cached files to tmp efi partition path
+      ansible.posix.synchronize:
+        src: "{{ playbook_dir }}/../cache/pi4/boot/efi/"
+        dest: "{{ tmp_efipart_path }}/"
+        archive: yes
+        rsync_opts:
+          - "--ignore-existing"
+      when: state == 'present' and use_cache is true
 
     - name: Wait 20 seconds for disk to catch up
       ansible.builtin.wait_for:
