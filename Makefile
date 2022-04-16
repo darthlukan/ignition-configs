@@ -18,7 +18,7 @@ prepare-sdcard:
 	ansible-playbook -i inventory/hosts.ini -c local playbooks/prepare-sdcard.yaml -K
 
 .PHONY: clean
-clean: clean-build clean-dist
+clean: clean-build clean-dist clean-cache
 
 .PHONY: clean-build
 clean-build:
@@ -27,6 +27,10 @@ clean-build:
 .PHONY: clean-dist
 clean-dist:
 	rm -rf dist
+
+.PHONY: cache-clean
+clean-cache:
+	rm -rf cache
 
 .PHONY: distribution 
 distribution:
