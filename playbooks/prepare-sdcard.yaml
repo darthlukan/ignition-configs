@@ -99,8 +99,7 @@
     - name: Wait 20 seconds for disk to catch up
       ansible.builtin.wait_for:
         path: "{{ tmp_efipart_path }}/start.elf"
-        delay: 20
-        timeout: 1
+        timeout: 20
       when: state == 'present'
 
     - name: Unmount efi part
