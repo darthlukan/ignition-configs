@@ -3,7 +3,7 @@ dataDir: /var/lib/microshift
 roles:
   - controlplane
   - node
-nodeName: "{{ master_hostname }}"
+nodeName: "{{ system_hostname }}"
 cluster:
   clusterCIDR: "10.42.0.0/16"
   serviceCIDR: "10.43.0.0/16"

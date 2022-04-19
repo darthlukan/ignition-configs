@@ -121,12 +121,12 @@
 
     - name: Bootstrap sdcard with coreos-installer and cached image
       ansible.builtin.shell:
-        cmd: coreos-installer install -a aarch64 -f {{ fcos_image.files[0].path }} -i {{ playbook_dir }}/../dist/{{ ign_to_apply }} {{ sdcard_device }}
+        cmd: coreos-installer install -a aarch64 -f {{ fcos_image.files[0].path }} -i {{ playbook_dir }}/../dist/config.ign {{ sdcard_device }}
       when: state == 'present' and use_cache is true
 
     - name: Bootstrap sdcard with coreos-installer
       ansible.builtin.shell:
-        cmd: coreos-installer install -a aarch64 -i {{ playbook_dir }}/../dist/{{ ign_to_apply }} {{ sdcard_device }}
+        cmd: coreos-installer install -a aarch64 -i {{ playbook_dir }}/../dist/config.ign {{ sdcard_device }}
       when: state == 'present' and use_cache is false
 
     - name: Query for efi partition

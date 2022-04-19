@@ -25,11 +25,8 @@
 
     - name: Copy ignition templates to build dir
       ansible.builtin.template:
-        src: templates/pi-cluster/{{ item }}.bu.j2
-        dest: "{{ playbook_dir }}/../build/{{ item }}.bu"
-      loop:
-        - master
-        - worker
+        src: templates/pi-cluster/config.bu.j2
+        dest: "{{ playbook_dir }}/../build/config.bu"
       when: state == 'present'
 
     - name: Make distribution
