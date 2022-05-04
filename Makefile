@@ -37,5 +37,4 @@ distribution:
 	rm -rf dist
 	mkdir dist
 	cp -r build/etc dist/
-	butane --files-dir dist --pretty --strict build/master.bu > dist/master.ign
-	butane --files-dir dist --pretty --strict build/worker.bu > dist/worker.ign
+	butane --files-dir dist --pretty --strict build/config.bu > dist/config.ign

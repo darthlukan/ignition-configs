@@ -21,11 +21,7 @@ prereq_pkgs:
   - coreos-installer
   - make
   - rpi-imager
-    
-worker_hostname: 'pi-worker-0'
-worker_ip: false 
-master_hostname: 'pi-master-0'
-master_ip: false 
 
-ign_to_apply: 'master.ign'
+system_hostname: 'pi-master-0'
+internal_ip: false 
 ...
